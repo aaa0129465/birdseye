@@ -116,8 +116,14 @@ def read_source_file(filename):
 def source_without_decorators(tokens, function_node):
     def_token = tokens.find_token(function_node.first_token, token.NAME, 'def')
     startpos = def_token.startpos
+    try:
+        prev_token = def_token.prev_token
+    except AttributeError:
+        prev_token = None
+    if prev_token and prev_token.type == token.NAME and prev_token.string == 'async':
+        startpos = prev_token.startpos
     source = tokens.text[startpos:function_node.last_token.endpos].rstrip()
-    assert source.startswith('def')
+    assert source.startswith('def') or source.startswith('async def')
 
     return startpos, source
 

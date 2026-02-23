@@ -96,7 +96,7 @@ class TracedFile(object):
 
     def set_enter_call_nodes(self):
         for node in self.nodes:
-            if isinstance(node, (ast.Module, ast.FunctionDef)):
+            if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef)):
                 for stmt in node.body:
                     if not is_future_import(stmt):
                         stmt._enter_call_node = True
@@ -186,8 +186,8 @@ class TreeTracerBase(object):
                              'at the bottom of the list.')
 
         try:
-            if inspect.iscoroutinefunction(func) or inspect.isasyncgenfunction(func):
-                raise ValueError('You cannot trace async functions')
+            if inspect.isasyncgenfunction(func):
+                raise ValueError('You cannot trace async generators')
         except AttributeError:
             pass
 
@@ -323,7 +323,7 @@ class TreeTracerBase(object):
             frame = frame.f_back
 
         for node in ancestors(node):
-            if isinstance(node, (ast.FunctionDef, ast.Lambda)):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
                 break
 
             if isinstance(node, ast.ClassDef):
@@ -607,7 +607,7 @@ class _StmtContext(object):
 
         parent = node.parent  # type: ast.AST
         return_node = frame_info.return_node
-        exiting = (isinstance(parent, (ast.FunctionDef, ast.Module)) and
+        exiting = (isinstance(parent, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Module)) and
                    (node is parent.body[-1] or
                     exc_val or
                     return_node))
@@ -662,7 +662,7 @@ def loops(node):
             parent = node.parent
         except AttributeError:
             break
-        if isinstance(parent, ast.FunctionDef):
+        if isinstance(parent, (ast.FunctionDef, ast.AsyncFunctionDef)):
             break
 
         is_containing_loop = (((isinstance(parent, ast.For) and parent.iter is not node or

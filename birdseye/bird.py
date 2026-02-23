@@ -487,7 +487,7 @@ class BirdsEye(TreeTracerBase):
             nodes_by_lineno = {
                 node.lineno: node
                 for node in traced_file.nodes
-                if isinstance(node, ast.FunctionDef)
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
             }
 
             def find_code(root_code):
@@ -544,7 +544,7 @@ class BirdsEye(TreeTracerBase):
             tokens = traced_file.tokens
             func_node = only(node
                              for node, _ in nodes
-                             if isinstance(node, ast.FunctionDef)
+                             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
                              and node.first_token.start[0] == start_lineno)
             func_startpos, source = source_without_decorators(tokens, func_node)
             # These are for the PyCharm plugin
@@ -596,7 +596,7 @@ class BirdsEye(TreeTracerBase):
 
             if start < 0:
                 assert (end < 0  # nodes before the def, i.e. decorators
-                        or isinstance(node, ast.FunctionDef))
+                        or isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
                 continue
 
             yield dict(
